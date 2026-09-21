@@ -1,4 +1,4 @@
-# PREFACE
+# DISCLAIMER
 This is a totally AI generated project. This is proof of concept of how  jev could be used for helping users navigate the internet to avoid things unrelated to their goals.
 
 

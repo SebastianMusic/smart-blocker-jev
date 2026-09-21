@@ -45,8 +45,21 @@ offers **Show page anyway**.
 
 ### Domain rules
 
-One domain per line. A domain also covers its subdomains, so `youtube.com`
-includes `m.youtube.com`.
+One rule per line. A rule is either:
+
+- **A domain.** It also covers its subdomains, so `youtube.com` includes
+  `m.youtube.com`.
+- **A regular expression between slashes.** It's matched case-insensitively
+  against both the site's hostname and the full page address, so you can
+  target parts of a site:
+
+  | Rule | Matches |
+  | --- | --- |
+  | `/youtube\.com\/shorts/` | YouTube Shorts, but not the rest of YouTube |
+  | `/^(www\.)?reddit\.com$/` | reddit.com and www.reddit.com, but not old.reddit.com |
+  | `/[?&]q=.*recipe/` | any search containing "recipe" |
+
+  A pattern that isn't a valid regular expression is rejected when you save.
 
 | List | Effect |
 | --- | --- |
@@ -66,6 +79,46 @@ rejected, it pauses until you enter a new one. The popup shows when checking
 is paused and has a **Resume now** button.
 
 In normal mode, a page that can't be checked is shown.
+
+### Import and export
+
+Under **Import and export** in settings you can save all your settings to a
+`.toml` file, and load them back on another computer or after reinstalling.
+
+- **Export settings** downloads your saved settings. Your API key is left out
+  unless you tick *Include my API key*. Don't share a file that contains it.
+- **Import settings…** loads a file. Only the settings in the file change;
+  anything left out keeps its current value. If any value is invalid, nothing
+  is changed and every problem is listed.
+
+An exported file looks like this and can be edited by hand:
+
+```toml
+version = 1
+
+[general]
+enabled = true
+intention = "Learning about Buddhism"
+threshold = 0.3
+strict_mode = false
+
+[api]
+model = "jev-latest"
+# key = "your TypeSafe API key"
+
+[rules]
+always_allow = []
+always_block = [ '/youtube\.com\/shorts/', "tiktok.com" ]
+never_check = [ "mail.google.com" ]
+
+[limits]
+min_interval_ms = 100
+max_calls_per_minute = 120
+max_calls_per_day = 10000
+```
+
+Tip: write regular expressions in single quotes (`'...'`) so backslashes don't
+need doubling.
 
 ## The toolbar popup
 

@@ -46,7 +46,8 @@
 
     <section class="card stack">
       <h2>Domain rules</h2>
-      <p class="muted">One domain per line. A domain also covers its subdomains. Rules apply without calling jev.</p>
+      <p class="muted">One rule per line. Rules apply without calling jev.</p>
+      <p class="muted">A domain like <code>youtube.com</code> also covers its subdomains. A regular expression between slashes, like <code>/youtube\.com\/shorts/</code> or <code>/^(www\.)?reddit\.com$/</code>, is matched case-insensitively against both the hostname and the full URL.</p>
       <div class="grid2">
         <div>
           <label for="allowDomains">Always allow</label>
@@ -87,6 +88,18 @@
       <button class="primary" type="submit">Save</button>
       <span id="saved" class="muted" role="status"></span>
     </div>
+
+    <section class="card stack">
+      <h2>Import and export</h2>
+      <p class="muted">Save all settings to a TOML file, or load them from one. Importing only changes the settings the file contains. Export uses your saved settings, so save first.</p>
+      <label class="row" style="font-weight:400"><input type="checkbox" id="export-key"> Include my API key in the export (don't share that file)</label>
+      <div class="row">
+        <button type="button" id="export">Export settings</button>
+        <button type="button" id="import">Import settings…</button>
+        <input type="file" id="import-file" hidden>
+      </div>
+      <div id="io-msg" class="muted" role="status"></div>
+    </section>
 
     <section class="card stack">
       <h2>Verdict cache</h2>

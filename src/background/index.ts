@@ -2,7 +2,7 @@ import { getDomain, getDomainWithoutSuffix } from "tldts";
 import { appendDebug } from "../shared/debuglog";
 import type { Message, PagePayload, StatusResponse, TabState, TabStatus } from "../shared/messages";
 import { DEFAULT_SETTINGS, loadSettings, verdictInputsChanged, type Settings } from "../shared/settings";
-import { hostMatches, isCheckableUrl, urlKey } from "../shared/url";
+import { hostMatches, isCheckableUrl, ruleMatches, urlKey } from "../shared/url";
 import { checkAllowance, effectiveLimits, Guard } from "./guard";
 import { decide, thresholdRule } from "./decision";
 import { askJev } from "./jev";
@@ -42,11 +42,11 @@ async function quickDecision(s: Settings, url: string): Promise<Quick> {
   if (!isCheckableUrl(url)) return { kind: "skip", detail: "Not a web page" };
   const host = new URL(url).hostname;
   if (hostMatches(host, NEVER_CHECK_HOSTS)) return { kind: "skip", detail: "Internal" };
-  if (hostMatches(host, s.neverCheckDomains) || /bank/i.test(getDomainWithoutSuffix(host) ?? "")) {
+  if (ruleMatches(url, s.neverCheckDomains) || /bank/i.test(getDomainWithoutSuffix(host) ?? "")) {
     return { kind: "skip", detail: "Sensitive site, never sent to jev" };
   }
-  if (hostMatches(host, s.allowDomains)) return { kind: "allow", detail: "On your allow list" };
-  if (hostMatches(host, s.blockDomains)) return { kind: "block", detail: "On your block list" };
+  if (ruleMatches(url, s.allowDomains)) return { kind: "allow", detail: "On your allow list" };
+  if (ruleMatches(url, s.blockDomains)) return { kind: "block", detail: "On your block list" };
   if (!s.intention.trim()) return { kind: "skip", detail: "No intention set" };
 
   const key = urlKey(url);

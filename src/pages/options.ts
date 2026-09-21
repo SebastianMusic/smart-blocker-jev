@@ -1,6 +1,7 @@
+import { exportSettings, FORMATS, formatForFile, importSettings } from "../shared/config";
 import type { Message, StatusResponse } from "../shared/messages";
 import { HARD_LIMITS, loadSettings, saveSettings, type Settings } from "../shared/settings";
-import { parseDomainList } from "../shared/url";
+import { isRegexRule, parseRuleList, regexRuleError } from "../shared/url";
 import { $, formatPercent } from "./dom";
 
 const TEXT_FIELDS = ["intention", "apiKey", "model"] as const;
@@ -20,13 +21,16 @@ async function refreshCounts() {
   $("blocked").textContent = String(status.stats.blockedCount);
 }
 
-async function init() {
-  const s = await loadSettings();
+function fillForm(s: Settings) {
   for (const k of TEXT_FIELDS) field(k).value = s[k];
   for (const k of NUMBER_FIELDS) field(k).value = String(s[k]);
   for (const k of LIST_FIELDS) field(k).value = s[k].join("\n");
   strictMode.checked = s.strictMode;
   showThreshold();
+}
+
+async function init() {
+  fillForm(await loadSettings());
   $("hard").textContent =
     `${HARD_LIMITS.minIntervalMs} ms between calls, ` +
     `${HARD_LIMITS.maxCallsPerMinute}/minute, ${HARD_LIMITS.maxCallsPerDay}/day`;
@@ -38,7 +42,18 @@ $<HTMLFormElement>("form").addEventListener("submit", async (e) => {
   const patch: Partial<Settings> = {};
   for (const k of TEXT_FIELDS) patch[k] = field(k).value.trim();
   for (const k of NUMBER_FIELDS) patch[k] = Number(field(k).value);
-  for (const k of LIST_FIELDS) patch[k] = parseDomainList(field(k).value);
+  for (const k of LIST_FIELDS) patch[k] = parseRuleList(field(k).value);
+
+  const invalid = LIST_FIELDS.flatMap((k) =>
+    patch[k]!.flatMap((rule) => {
+      const err = isRegexRule(rule) ? regexRuleError(rule) : null;
+      return err ? [`${rule}: ${err}`] : [];
+    }),
+  );
+  if (invalid.length > 0) {
+    savedMsg.textContent = `Not saved. Invalid pattern: ${invalid.join("; ")}`;
+    return;
+  }
   patch.strictMode = strictMode.checked;
 
   if (!patch.model) patch.model = "jev-latest";
@@ -51,6 +66,56 @@ $<HTMLFormElement>("form").addEventListener("submit", async (e) => {
 $("flush").addEventListener("click", async () => {
   await browser.runtime.sendMessage({ type: "flush" } satisfies Message);
   await refreshCounts();
+});
+
+const fileInput = $<HTMLInputElement>("import-file");
+const ioMsg = $("io-msg");
+fileInput.accept = FORMATS.flatMap((f) => f.extensions).join(",");
+
+function showIoResult(heading: string, lines: string[]) {
+  const list = document.createElement("ul");
+  for (const line of lines) {
+    const li = document.createElement("li");
+    li.textContent = line;
+    list.append(li);
+  }
+  const p = document.createElement("p");
+  p.textContent = heading;
+  ioMsg.replaceChildren(p, ...(lines.length > 0 ? [list] : []));
+}
+
+$("export").addEventListener("click", async () => {
+  const { filename, content, mimeType } = exportSettings(await loadSettings(), {
+    includeApiKey: $<HTMLInputElement>("export-key").checked,
+  });
+  const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  showIoResult(`Exported saved settings to ${filename}.`, []);
+});
+
+$("import").addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", async () => {
+  const file = fileInput.files?.[0];
+  fileInput.value = "";
+  if (!file) return;
+  const format = formatForFile(file.name);
+  if (!format) {
+    const supported = FORMATS.flatMap((f) => f.extensions).join(", ");
+    return showIoResult(`Not imported: ${file.name} is not a supported file type (${supported}).`, []);
+  }
+  const result = importSettings(await file.text(), format);
+  if (result.errors.length > 0) {
+    return showIoResult(`Not imported: ${file.name} has problems, nothing was changed.`, result.errors);
+  }
+  fillForm(await saveSettings(result.settings));
+  const count = Object.keys(result.settings).length;
+  showIoResult(`Imported ${count} setting${count === 1 ? "" : "s"} from ${file.name}.`, result.warnings);
+  setTimeout(refreshCounts, 100);
 });
 
 init();

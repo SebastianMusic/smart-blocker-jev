@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS, verdictInputsChanged } from "../src/shared/settings";
-import { hostMatches, isCheckableUrl, parseDomainList, urlKey } from "../src/shared/url";
+import { hostMatches, isCheckableUrl, parseRuleList, regexRuleError, ruleMatches, urlKey } from "../src/shared/url";
 
 describe("urlKey", () => {
   it("drops fragments and tracking params and sorts the query", () => {
@@ -21,12 +21,66 @@ describe("hostMatches", () => {
   });
 });
 
-describe("parseDomainList", () => {
+describe("parseRuleList", () => {
   it("normalises pasted URLs and blank lines", () => {
-    expect(parseDomainList("https://Reddit.com/r/x\n\n news.ycombinator.com ")).toEqual([
+    expect(parseRuleList("https://Reddit.com/r/x\n\n news.ycombinator.com ")).toEqual([
       "reddit.com",
       "news.ycombinator.com",
     ]);
+  });
+});
+
+describe("parseRuleList with regex", () => {
+  it("keeps regex lines whole, including spaces, commas and case", () => {
+    expect(parseRuleList("/a{1,3} B/\nExample.com, foo.org\n  /^m\\./  ")).toEqual([
+      "/a{1,3} B/",
+      "example.com",
+      "foo.org",
+      "/^m\\./",
+    ]);
+  });
+});
+
+describe("ruleMatches", () => {
+  const shorts = "https://www.youtube.com/shorts/abc123";
+  const video = "https://www.youtube.com/watch?v=xyz";
+
+  it("treats plain rules as domains with subdomains", () => {
+    expect(ruleMatches(shorts, ["youtube.com"])).toBe(true);
+    expect(ruleMatches("https://notyoutube.com/", ["youtube.com"])).toBe(false);
+  });
+
+  it("matches regex rules against the full URL", () => {
+    expect(ruleMatches(shorts, ["/youtube\\.com\\/shorts/"])).toBe(true);
+    expect(ruleMatches(video, ["/youtube\\.com\\/shorts/"])).toBe(false);
+    expect(ruleMatches("https://www.google.com/search?q=pasta+recipe", ["/[?&]q=.*recipe/"])).toBe(true);
+  });
+
+  it("matches regex rules against the hostname, so anchors work", () => {
+    const rule = ["/^(www\\.)?reddit\\.com$/"];
+    expect(ruleMatches("https://reddit.com/r/x", rule)).toBe(true);
+    expect(ruleMatches("https://www.reddit.com/", rule)).toBe(true);
+    expect(ruleMatches("https://old.reddit.com/", rule)).toBe(false);
+  });
+
+  it("is case-insensitive", () => {
+    expect(ruleMatches("https://example.com/Shorts/1", ["/SHORTS/"])).toBe(true);
+  });
+
+  it("ignores invalid patterns instead of throwing", () => {
+    expect(ruleMatches(shorts, ["/(unclosed/"])).toBe(false);
+    expect(ruleMatches(shorts, ["/(unclosed/", "youtube.com"])).toBe(true);
+  });
+
+  it("gives the same answer on repeated calls (no stateful regex)", () => {
+    for (let i = 0; i < 3; i++) expect(ruleMatches(shorts, ["/shorts/"])).toBe(true);
+  });
+});
+
+describe("regexRuleError", () => {
+  it("reports invalid patterns and accepts valid ones", () => {
+    expect(regexRuleError("/(unclosed/")).toMatch(/./);
+    expect(regexRuleError("/youtube\\.com/")).toBeNull();
   });
 });
 
