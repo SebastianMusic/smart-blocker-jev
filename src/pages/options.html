@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Smart Blocker Jev settings</title>
+  <link rel="stylesheet" href="pages.css">
+  <style>body { max-width: 720px; margin: 0 auto; padding: 24px 16px; }</style>
+</head>
+<body>
+  <form id="form" class="stack">
+    <h1>Smart Blocker Jev settings</h1>
+
+    <section class="card stack">
+      <h2>Your intention</h2>
+      <textarea id="intention" rows="3" placeholder="e.g. Researching and writing my thesis on coastal erosion"></textarea>
+    </section>
+
+    <section class="card stack">
+      <h2>TypeSafe API</h2>
+      <div>
+        <label for="apiKey">API key</label>
+        <input type="password" id="apiKey" autocomplete="off" spellcheck="false">
+        <p class="muted">Stored only in this browser and sent only to api.typesafe.ai.</p>
+      </div>
+      <div>
+        <label for="model">Model</label>
+        <input type="text" id="model" spellcheck="false">
+      </div>
+    </section>
+
+    <section class="card stack">
+      <h2>Decision thresholds</h2>
+      <p class="muted">jev returns the probability (0–1) that a page matches your intention. Pages in between are allowed but not cached. Changing these clears cached verdicts.</p>
+      <div class="grid2">
+        <div>
+          <label for="blockBelow">Block below</label>
+          <input type="number" id="blockBelow" min="0" max="1" step="0.05" required>
+        </div>
+        <div>
+          <label for="allowAbove">Allow above</label>
+          <input type="number" id="allowAbove" min="0" max="1" step="0.05" required>
+        </div>
+      </div>
+    </section>
+
+    <section class="card stack">
+      <h2>Domain rules</h2>
+      <p class="muted">One domain per line. A domain also covers its subdomains. Rules apply without calling jev.</p>
+      <div class="grid2">
+        <div>
+          <label for="allowDomains">Always allow</label>
+          <textarea id="allowDomains" rows="6" spellcheck="false"></textarea>
+        </div>
+        <div>
+          <label for="blockDomains">Always block</label>
+          <textarea id="blockDomains" rows="6" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div>
+        <label for="neverCheckDomains">Never check (sensitive sites: never sent to jev)</label>
+        <textarea id="neverCheckDomains" rows="5" spellcheck="false"></textarea>
+        <p class="muted">Domains containing "bank" are always skipped.</p>
+      </div>
+    </section>
+
+    <section class="card stack">
+      <h2>Cost limits</h2>
+      <p class="muted">Pages that can't be checked because of a limit are allowed. Hard ceilings: <span id="hard"></span>.</p>
+      <div class="grid2">
+        <div>
+          <label for="minIntervalMs">Min. ms between calls</label>
+          <input type="number" id="minIntervalMs" min="0" step="100" required>
+        </div>
+        <div>
+          <label for="maxCallsPerMinute">Max calls per minute</label>
+          <input type="number" id="maxCallsPerMinute" min="0" step="1" required>
+        </div>
+        <div>
+          <label for="maxCallsPerDay">Max calls per day</label>
+          <input type="number" id="maxCallsPerDay" min="0" step="1" required>
+        </div>
+      </div>
+    </section>
+
+    <div class="row">
+      <button class="primary" type="submit">Save</button>
+      <span id="saved" class="muted" role="status"></span>
+    </div>
+
+    <section class="card stack">
+      <h2>Verdict cache</h2>
+      <p><span id="cached"></span> cached verdicts, <span id="blocked"></span> of them blocked.</p>
+      <div><button type="button" id="flush">Flush verdicts</button></div>
+    </section>
+  </form>
+  <script src="options.js"></script>
+</body>
+</html>

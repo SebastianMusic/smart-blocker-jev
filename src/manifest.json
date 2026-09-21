@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Smart Blocker Jev",
+  "version": "0.1.0",
+  "description": "Blocks pages that don't match what you said you want to use the internet for, judged by the TypeSafe jev model.",
+  "icons": { "48": "icons/icon.svg", "96": "icons/icon.svg" },
+  "incognito": "not_allowed",
+  "permissions": ["storage", "tabs", "webNavigation"],
+  "host_permissions": ["<all_urls>", "https://api.typesafe.ai/*"],
+  "background": { "scripts": ["background.js"] },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Smart Blocker Jev",
+    "default_popup": "pages/popup.html",
+    "default_icon": "icons/icon.svg"
+  },
+  "options_ui": { "page": "pages/options.html", "open_in_tab": true },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "smart-blocker-jev@local",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["websiteContent", "browsingActivity", "searchTerms"]
+      }
+    },
+    "gecko_android": { "strict_min_version": "142.0" }
+  }
+}

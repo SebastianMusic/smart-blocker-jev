@@ -1,0 +1,17 @@
+https://docs.typesafe.ai/concepts/system-one
+https://docs.typesafe.ai/concepts/state
+https://docs.typesafe.ai/primitives
+https://docs.typesafe.ai/primitives/choice
+https://docs.typesafe.ai/primitives/score
+https://docs.typesafe.ai/primitives/noul
+https://docs.typesafe.ai/primitives/advanced
+
+https://docs.typesafe.ai/introduction/machine-learning-primer
+https://docs.typesafe.ai/confidence
+https://docs.typesafe.ai/concepts/how-to-build-with-system-one
+https://docs.typesafe.ai/concepts/use-case-map
+https://docs.typesafe.ai/patterns
+https://docs.typesafe.ai/patterns/fan-out
+https://docs.typesafe.ai/patterns/confidence-routing
+https://docs.typesafe.ai/patterns/composite-scoring
+https://docs.typesafe.ai/patterns/intent-routing

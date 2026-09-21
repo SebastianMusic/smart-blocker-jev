@@ -1,0 +1,27 @@
+{
+  "name": "smart-blocker-jev",
+  "version": "0.1.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "npm run build && web-ext lint --source-dir dist",
+    "start": "npm run build && web-ext run --source-dir dist",
+    "package": "npm run build && web-ext build --source-dir dist --artifacts-dir web-ext-artifacts --overwrite-dest"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "tldts": "^7.4.13"
+  },
+  "devDependencies": {
+    "@types/firefox-webext-browser": "^143.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1",
+    "web-ext": "^10.7.0"
+  }
+}

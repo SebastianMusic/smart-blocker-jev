@@ -1,0 +1,5 @@
+node_modules/
+dist/
+web-ext-artifacts/
+typesafe-docs/docs/
+typesafe-docs/all-docs-compiled.txt

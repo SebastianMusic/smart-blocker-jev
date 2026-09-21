@@ -1,0 +1,87 @@
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --text: #1d1d1f;
+  --muted: #6b6b70;
+  --border: #deded9;
+  --accent: #3b5bdb;
+  --accent-text: #ffffff;
+  --ok: #2b8a3e;
+  --warn: #b35c00;
+  --bad: #c92a2a;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #18181b;
+    --surface: #222226;
+    --text: #ececef;
+    --muted: #a0a0a8;
+    --border: #3a3a40;
+    --accent: #748ffc;
+    --accent-text: #0b0b10;
+    --ok: #69db7c;
+    --warn: #ffa94d;
+    --bad: #ff8787;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 system-ui, sans-serif;
+}
+h1 { font-size: 1.15rem; margin: 0; }
+h2 { font-size: 0.95rem; margin: 0 0 0.5rem; }
+p { margin: 0.25rem 0; }
+.muted { color: var(--muted); font-size: 0.85rem; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.stack > * + * { margin-top: 12px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+label { display: block; font-weight: 600; margin-bottom: 4px; }
+textarea, input[type="text"], input[type="password"], input[type="number"] {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+textarea { resize: vertical; }
+button {
+  font: inherit;
+  border-radius: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button:disabled { opacity: 0.5; cursor: default; }
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.s-allowed { color: var(--ok); }
+.s-blocked, .s-error { color: var(--bad); }
+.s-uncertain, .s-rate-limited, .s-checking { color: var(--warn); }
+.s-skipped { color: var(--muted); }
+.banner { border-color: var(--warn); }
+.url { word-break: break-all; font-family: ui-monospace, monospace; font-size: 0.85rem; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+[hidden] { display: none !important; }

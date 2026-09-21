@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Blocked by Smart Blocker Jev</title>
+  <link rel="stylesheet" href="pages.css">
+  <style>
+    body { max-width: 640px; margin: 0 auto; padding: 12vh 16px 32px; }
+    .big { font-size: 1.6rem; line-height: 1.25; margin: 0 0 8px; }
+    .meter { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; margin-top: 6px; }
+    .meter > div { height: 100%; background: var(--bad); }
+  </style>
+</head>
+<body class="stack">
+  <h1 class="big">This page doesn't match what you said you're here for.</h1>
+  <p class="muted" id="detail"></p>
+
+  <div class="card stack">
+    <div>
+      <label>You tried to open</label>
+      <p class="url" id="url"></p>
+    </div>
+    <div>
+      <label>Your intention</label>
+      <p id="intention"></p>
+    </div>
+    <div id="noul-block" hidden>
+      <label>jev's verdict</label>
+      <p><span id="noul"></span> probability this page matches your intention (blocked below <span id="threshold"></span>).</p>
+      <div class="meter"><div id="meter"></div></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <button class="primary" id="back">Go back</button>
+    <button id="options">Change intention or settings</button>
+  </div>
+  <script src="blocked.js"></script>
+</body>
+</html>
