@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkAllowance, effectiveLimits, emptyGuardState, recordCall, recordOutcome } from "../src/background/guard";
-import { HARD_LIMITS } from "../src/shared/settings";
+import { DEFAULT_SETTINGS, HARD_LIMITS } from "../src/shared/settings";
 
 const limits = { minIntervalMs: 1000, maxCallsPerMinute: 3, maxCallsPerDay: 5 };
 const T0 = Date.UTC(2026, 8, 21, 12, 0, 0);
@@ -43,6 +43,10 @@ describe("guard", () => {
   it("pauses indefinitely on auth failure", () => {
     const s = recordOutcome(emptyGuardState(), "auth", T0);
     expect(checkAllowance(s, limits, T0 + 30 * 24 * 3_600_000).ok).toBe(false);
+  });
+
+  it("uses the default limits unclamped", () => {
+    expect(effectiveLimits(DEFAULT_SETTINGS)).toEqual({ minIntervalMs: 100, maxCallsPerMinute: 120, maxCallsPerDay: 10_000 });
   });
 
   it("clamps user limits to hard ceilings", () => {

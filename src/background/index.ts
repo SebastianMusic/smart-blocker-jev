@@ -1,12 +1,13 @@
 import { getDomain, getDomainWithoutSuffix } from "tldts";
+import { appendDebug } from "../shared/debuglog";
 import type { Message, PagePayload, StatusResponse, TabState, TabStatus } from "../shared/messages";
 import { DEFAULT_SETTINGS, loadSettings, verdictInputsChanged, type Settings } from "../shared/settings";
 import { hostMatches, isCheckableUrl, urlKey } from "../shared/url";
 import { checkAllowance, effectiveLimits, Guard } from "./guard";
-import { askJev, decide } from "./jev";
+import { decide, thresholdRule } from "./decision";
+import { askJev } from "./jev";
 import { VerdictStore } from "./verdicts";
 
-const UNCERTAIN_MEMO_MS = 2 * 60_000;
 const SPA_SETTLE_MS = 1500;
 const NEVER_CHECK_HOSTS = ["api.typesafe.ai"];
 
@@ -15,13 +16,11 @@ const verdicts = new VerdictStore();
 const tabStatus = new Map<number, TabStatus>();
 /** Single-flight: concurrent checks of one URL share one API call. */
 const inflight = new Map<string, Promise<ModelRun>>();
-/** Uncertain answers are not cached, but are remembered briefly so reloads don't re-bill. */
-const recentUncertain = new Map<string, { noul: number; at: number }>();
 const spaTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
 type Quick =
   | { kind: "skip"; detail: string }
-  | { kind: "allow" | "block" | "uncertain"; noul?: number; detail: string }
+  | { kind: "allow" | "block"; noul?: number; detail: string }
   | { kind: "need-model"; key: string };
 
 type ModelRun = { kind: "verdict"; noul: number } | { kind: "not-run"; state: TabState; detail: string };
@@ -53,17 +52,16 @@ async function quickDecision(s: Settings, url: string): Promise<Quick> {
   const key = urlKey(url);
   const cached = await verdicts.get(key);
   if (cached) return { kind: cached.decision, noul: cached.noul, detail: "Cached verdict" };
-  const memo = recentUncertain.get(key);
-  if (memo && Date.now() - memo.at < UNCERTAIN_MEMO_MS) {
-    return { kind: "uncertain", noul: memo.noul, detail: "jev was unsure recently; allowed" };
-  }
   if (!s.apiKey) return { kind: "skip", detail: "No TypeSafe API key set" };
   return { kind: "need-model", key };
 }
 
-async function redirectToBlocked(tabId: number, url: string, detail: string, noul?: number) {
+async function redirectToBlocked(tabId: number, url: string, s: Settings, detail: string, noul?: number) {
   const params = new URLSearchParams({ url, detail });
-  if (noul !== undefined) params.set("noul", String(noul));
+  if (noul !== undefined) {
+    params.set("noul", String(noul));
+    params.set("rule", thresholdRule(s.threshold));
+  }
   await browser.tabs.update(tabId, {
     url: browser.runtime.getURL(`pages/blocked.html?${params}`),
     loadReplace: true,
@@ -96,6 +94,15 @@ function runModel(tabId: number, url: string, key: string, s: Settings): Promise
     const domain = getDomain(payload.url) ?? new URL(payload.url).hostname;
     const result = await askJev(s.apiKey, s.model, s.intention, { ...payload, domain });
     await guard.report(result.outcome);
+    appendDebug({
+      at: Date.now(),
+      url,
+      result: result.outcome === "ok" ? decide(result.noul, s.threshold) : result.message,
+      noul: result.outcome === "ok" ? result.noul : undefined,
+      threshold: s.threshold,
+      strict: isStrict(s),
+      ...result.trace,
+    }).catch((e) => console.error("debug log failed", e));
     if (result.outcome !== "ok") {
       return { kind: "not-run", state: "error", detail: `jev call failed (${result.message}); allowed` };
     }
@@ -106,51 +113,101 @@ function runModel(tabId: number, url: string, key: string, s: Settings): Promise
   return pending;
 }
 
+const isStrict = (s: Settings) => s.enabled && s.strictMode;
+
+const QUICK_STATE = { skip: "skipped", allow: "allowed", block: "blocked" } as const;
+
+async function muteWhileVerifying(tabId: number) {
+  const tab = await browser.tabs.get(tabId).catch(() => null);
+  if (tab && !tab.mutedInfo?.muted) await browser.tabs.update(tabId, { muted: true }).catch(() => undefined);
+}
+
+/** Unmutes only if this extension did the muting, never a tab the user muted. */
+async function restoreAudio(tabId: number) {
+  const tab = await browser.tabs.get(tabId).catch(() => null);
+  const m = tab?.mutedInfo;
+  if (m?.muted && m.reason === "extension" && m.extensionId === browser.runtime.id) {
+    await browser.tabs.update(tabId, { muted: false }).catch(() => undefined);
+  }
+}
+
+function tellOverlay(tabId: number, msg: Message) {
+  return browser.tabs.sendMessage(tabId, msg, { frameId: 0 }).catch(() => undefined);
+}
+
+/** Records the final outcome for a page and acts on it (block, or in strict mode reveal/unverified). */
+async function finish(tabId: number, url: string, s: Settings, state: TabState, detail: string, noul?: number) {
+  setStatus(tabId, url, state, detail, noul);
+
+  if (state === "blocked") {
+    const tab = await browser.tabs.get(tabId).catch(() => null);
+    if (safeKey(tab?.url) !== safeKey(url)) return;
+    await restoreAudio(tabId);
+    return redirectToBlocked(tabId, url, s, detail, noul);
+  }
+  if (!isStrict(s)) return;
+  if (state === "rate-limited" || state === "error") {
+    return tellOverlay(tabId, { type: "unverified", url, detail });
+  }
+  await tellOverlay(tabId, { type: "reveal", url });
+  await restoreAudio(tabId);
+}
+
 async function evaluate(tabId: number, url: string) {
   const s = await loadSettings();
   const q = await quickDecision(s, url);
-
-  switch (q.kind) {
-    case "skip":
-      return setStatus(tabId, url, "skipped", q.detail);
-    case "allow":
-      return setStatus(tabId, url, "allowed", q.detail, q.noul);
-    case "uncertain":
-      return setStatus(tabId, url, "uncertain", q.detail, q.noul);
-    case "block":
-      setStatus(tabId, url, "blocked", q.detail, q.noul);
-      return redirectToBlocked(tabId, url, q.detail, q.noul);
+  if (q.kind !== "need-model") {
+    return finish(tabId, url, s, QUICK_STATE[q.kind], q.detail, "noul" in q ? q.noul : undefined);
   }
 
   setStatus(tabId, url, "checking", "Asking jev");
   const generation = verdicts.generation;
   const run = await runModel(tabId, url, q.key, s);
-  if (run.kind === "not-run") return setStatus(tabId, url, run.state, run.detail);
+  if (run.kind === "not-run") return finish(tabId, url, s, run.state, run.detail);
 
   if (generation !== verdicts.generation) {
-    return setStatus(tabId, url, "skipped", "Settings changed during the check; reload to re-check", run.noul);
+    return finish(tabId, url, s, "error", "Settings changed during the check; reload to re-check", run.noul);
   }
 
   const { noul } = run;
-  switch (decide(noul, s.blockBelow, s.allowAbove)) {
-    case "allow":
-      await verdicts.set(q.key, { decision: "allow", noul, at: Date.now() }, generation);
-      return setStatus(tabId, url, "allowed", "Matches your intention", noul);
-    case "uncertain":
-      recentUncertain.set(q.key, { noul, at: Date.now() });
-      return setStatus(tabId, url, "uncertain", "jev is unsure; allowed without caching", noul);
-    case "block": {
-      await verdicts.set(q.key, { decision: "block", noul, at: Date.now() }, generation);
-      setStatus(tabId, url, "blocked", "Does not match your intention", noul);
-      const tab = await browser.tabs.get(tabId).catch(() => null);
-      if (safeKey(tab?.url) === q.key) await redirectToBlocked(tabId, url, "Does not match your intention", noul);
-    }
+  const decision = decide(noul, s.threshold);
+  await verdicts.set(q.key, { decision, noul, at: Date.now() }, generation);
+  return decision === "allow"
+    ? finish(tabId, url, s, "allowed", "Matches your intention", noul)
+    : finish(tabId, url, s, "blocked", "Does not match your intention", noul);
+}
+
+/** Answers the strict-mode overlay: can the page be shown right away, without asking jev? */
+async function coverCheck(tabId: number, url: string): Promise<{ reveal: boolean }> {
+  const s = await loadSettings();
+  if (!isStrict(s)) return { reveal: true };
+  const q = await quickDecision(s, url).catch(() => null);
+  if (q?.kind === "allow" || q?.kind === "skip") return { reveal: true };
+  if (q?.kind !== "block") await muteWhileVerifying(tabId);
+  return { reveal: false };
+}
+
+const OVERLAY_ID = "strict-overlay";
+
+async function syncOverlayRegistration(s: Settings) {
+  const registered = await browser.scripting.getRegisteredContentScripts({ ids: [OVERLAY_ID] });
+  if (isStrict(s) && registered.length === 0) {
+    await browser.scripting.registerContentScripts([
+      {
+        id: OVERLAY_ID,
+        js: ["overlay.js"],
+        matches: ["http://*/*", "https://*/*"],
+        runAt: "document_start",
+        persistAcrossSessions: true,
+      },
+    ]);
+  } else if (!isStrict(s) && registered.length > 0) {
+    await browser.scripting.unregisterContentScripts({ ids: [OVERLAY_ID] });
   }
 }
 
-async function flushVerdicts() {
-  await verdicts.flush();
-  recentUncertain.clear();
+function flushVerdicts() {
+  return verdicts.flush();
 }
 
 async function stats(): Promise<StatusResponse["stats"]> {
@@ -178,31 +235,49 @@ browser.runtime.onMessage.addListener((msg: Message, sender) => {
       return flushVerdicts();
     case "resume":
       return guard.resume();
+    case "cover-check":
+      if (sender.tab?.id === undefined || sender.frameId !== 0) return Promise.resolve({ reveal: true });
+      return coverCheck(sender.tab.id, msg.url);
+    case "unmute":
+      if (sender.tab?.id !== undefined) return restoreAudio(sender.tab.id);
+      return;
   }
 });
 
 // Fast path: cached blocks and block-list domains redirect before the page loads. Never calls jev.
 browser.webNavigation.onBeforeNavigate.addListener(async ({ tabId, frameId, url }) => {
   if (frameId !== 0) return;
-  const q = await quickDecision(await loadSettings(), url).catch(() => null);
+  const s = await loadSettings();
+  const q = await quickDecision(s, url).catch(() => null);
   if (q?.kind === "block") {
     setStatus(tabId, url, "blocked", q.detail, q.noul);
-    await redirectToBlocked(tabId, url, q.detail, q.noul);
+    await redirectToBlocked(tabId, url, s, q.detail, q.noul);
   }
 });
 
 // Single-page apps change URL without a page load; wait for the new content to settle.
-browser.webNavigation.onHistoryStateUpdated.addListener(({ tabId, frameId, url }) => {
+browser.webNavigation.onHistoryStateUpdated.addListener(async ({ tabId, frameId, url }) => {
   if (frameId !== 0) return;
   clearTimeout(spaTimers.get(tabId));
+  spaTimers.delete(tabId);
+
+  const s = await loadSettings();
+  const q = await quickDecision(s, url).catch(() => null);
+  if (!q) return;
+  if (q.kind !== "need-model") {
+    return finish(tabId, url, s, QUICK_STATE[q.kind], q.detail, "noul" in q ? q.noul : undefined);
+  }
+
+  if (isStrict(s)) {
+    await tellOverlay(tabId, { type: "cover" });
+    await muteWhileVerifying(tabId);
+  }
   spaTimers.set(
     tabId,
     setTimeout(async () => {
       spaTimers.delete(tabId);
       const tab = await browser.tabs.get(tabId).catch(() => null);
-      if (tab?.url && safeKey(tab.url) === safeKey(url)) {
-        evaluate(tabId, tab.url).catch((e) => console.error("evaluate failed", e));
-      }
+      if (tab?.url) evaluate(tabId, tab.url).catch((e) => console.error("evaluate failed", e));
     }, SPA_SETTLE_MS),
   );
 });
@@ -219,4 +294,9 @@ browser.storage.onChanged.addListener((changes, area) => {
   const after = { ...DEFAULT_SETTINGS, ...(changes.settings.newValue as Partial<Settings> | undefined) };
   if (verdictInputsChanged(before, after)) flushVerdicts();
   if (before.apiKey !== after.apiKey) guard.resume();
+  if (isStrict(before) !== isStrict(after)) syncOverlayRegistration(after);
 });
+
+// Keep the strict-mode overlay registration in line with settings whenever the event page wakes.
+browser.runtime.onStartup.addListener(() => undefined);
+loadSettings().then(syncOverlayRegistration).catch((e) => console.error("overlay sync failed", e));

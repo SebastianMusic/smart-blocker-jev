@@ -21,7 +21,6 @@ export type TabState =
   | "checking"
   | "allowed"
   | "blocked"
-  | "uncertain"
   | "skipped"
   | "rate-limited"
   | "error";
@@ -46,7 +45,13 @@ export type Message =
   | { type: "extract" }
   | { type: "status"; tabId: number }
   | { type: "flush" }
-  | { type: "resume" };
+  | { type: "resume" }
+  // strict mode: overlay <-> background
+  | { type: "cover-check"; url: string }
+  | { type: "cover" }
+  | { type: "reveal"; url: string }
+  | { type: "unverified"; url: string; detail: string }
+  | { type: "unmute" };
 
 export interface StatusResponse {
   tab: TabStatus | null;

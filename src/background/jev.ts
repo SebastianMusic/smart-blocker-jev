@@ -23,44 +23,51 @@ export type JevResult =
   | { outcome: "ok"; noul: number }
   | { outcome: Exclude<CallOutcome, "ok">; message: string };
 
+/** What went over the wire, minus the API key, for the debug log. */
+export interface JevTrace {
+  request: unknown;
+  status: number | null;
+  response: string;
+  ms: number;
+}
+
 export async function askJev(
   apiKey: string,
   model: string,
   intention: string,
   page: PagePayload & { domain: string },
-): Promise<JevResult> {
+): Promise<JevResult & { trace: JevTrace }> {
+  const request = { model, state: { user_intention: intention, page }, questions: QUESTIONS };
+  const started = performance.now();
+  const trace: JevTrace = { request, status: null, response: "", ms: 0 };
+  const done = (r: JevResult) => ({ ...r, trace: { ...trace, ms: Math.round(performance.now() - started) } });
+
   let res: Response;
   try {
     res = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, state: { user_intention: intention, page }, questions: QUESTIONS }),
+      body: JSON.stringify(request),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
+    trace.status = res.status;
+    trace.response = await res.text();
   } catch (e) {
-    return { outcome: "error", message: e instanceof Error ? e.message : String(e) };
+    return done({ outcome: "error", message: e instanceof Error ? e.message : String(e) });
   }
 
-  if (res.status === 401 || res.status === 403) return { outcome: "auth", message: `HTTP ${res.status}` };
-  if (res.status === 429) return { outcome: "rate-limited", message: "HTTP 429" };
-  if (!res.ok) return { outcome: "error", message: `HTTP ${res.status}` };
+  if (res.status === 401 || res.status === 403) return done({ outcome: "auth", message: `HTTP ${res.status}` });
+  if (res.status === 429) return done({ outcome: "rate-limited", message: "HTTP 429" });
+  if (!res.ok) return done({ outcome: "error", message: `HTTP ${res.status}` });
 
   try {
-    const body = (await res.json()) as { answers?: { matches_intention?: { noul?: unknown } } };
+    const body = JSON.parse(trace.response) as { answers?: { matches_intention?: { noul?: unknown } } };
     const noul = body.answers?.matches_intention?.noul;
     if (typeof noul !== "number" || !(noul >= 0 && noul <= 1)) {
-      return { outcome: "error", message: "unexpected response shape" };
+      return done({ outcome: "error", message: "unexpected response shape" });
     }
-    return { outcome: "ok", noul };
+    return done({ outcome: "ok", noul });
   } catch {
-    return { outcome: "error", message: "invalid JSON response" };
+    return done({ outcome: "error", message: "invalid JSON response" });
   }
-}
-
-export type Decision = "block" | "allow" | "uncertain";
-
-export function decide(noul: number, blockBelow: number, allowAbove: number): Decision {
-  if (noul < blockBelow) return "block";
-  if (noul > allowAbove) return "allow";
-  return "uncertain";
 }

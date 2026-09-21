@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { decide } from "../src/background/jev";
 import { DEFAULT_SETTINGS, verdictInputsChanged } from "../src/shared/settings";
 import { hostMatches, isCheckableUrl, parseDomainList, urlKey } from "../src/shared/url";
 
@@ -39,20 +38,11 @@ describe("isCheckableUrl", () => {
   });
 });
 
-describe("decide", () => {
-  it("splits into block / uncertain / allow", () => {
-    expect(decide(0.1, 0.3, 0.7)).toBe("block");
-    expect(decide(0.3, 0.3, 0.7)).toBe("uncertain");
-    expect(decide(0.5, 0.3, 0.7)).toBe("uncertain");
-    expect(decide(0.71, 0.3, 0.7)).toBe("allow");
-  });
-});
-
 describe("verdictInputsChanged", () => {
   it("flushes on intention or threshold changes, not on unrelated settings", () => {
     const base = DEFAULT_SETTINGS;
     expect(verdictInputsChanged(base, { ...base, intention: "study" })).toBe(true);
-    expect(verdictInputsChanged(base, { ...base, blockBelow: 0.2 })).toBe(true);
+    expect(verdictInputsChanged(base, { ...base, threshold: 0.2 })).toBe(true);
     expect(verdictInputsChanged(base, { ...base, maxCallsPerDay: 10 })).toBe(false);
   });
 });

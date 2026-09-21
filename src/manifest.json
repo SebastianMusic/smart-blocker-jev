@@ -5,7 +5,7 @@
   "description": "Blocks pages that don't match what you said you want to use the internet for, judged by the TypeSafe jev model.",
   "icons": { "48": "icons/icon.svg", "96": "icons/icon.svg" },
   "incognito": "not_allowed",
-  "permissions": ["storage", "tabs", "webNavigation"],
+  "permissions": ["storage", "tabs", "webNavigation", "scripting"],
   "host_permissions": ["<all_urls>", "https://api.typesafe.ai/*"],
   "background": { "scripts": ["background.js"] },
   "content_scripts": [

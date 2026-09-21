@@ -9,7 +9,7 @@ await mkdir("dist/pages", { recursive: true });
 const copyStatic = async () => {
   await cp("src/manifest.json", "dist/manifest.json");
   await cp("src/icons", "dist/icons", { recursive: true });
-  for (const f of ["popup.html", "options.html", "blocked.html", "pages.css"]) {
+  for (const f of ["popup.html", "options.html", "blocked.html", "debug.html", "pages.css"]) {
     await cp(`src/pages/${f}`, `dist/pages/${f}`);
   }
 };
@@ -18,9 +18,11 @@ const options = {
   entryPoints: {
     background: "src/background/index.ts",
     content: "src/content/index.ts",
+    overlay: "src/content/overlay.ts",
     "pages/popup": "src/pages/popup.ts",
     "pages/options": "src/pages/options.ts",
     "pages/blocked": "src/pages/blocked.ts",
+    "pages/debug": "src/pages/debug.ts",
   },
   outdir: "dist",
   bundle: true,

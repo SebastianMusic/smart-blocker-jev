@@ -20,11 +20,14 @@ evening lost to it. Smart Blocker Jev blocks by **intent** instead of domain.
    title, description, headings and a short excerpt of the main text).
 3. TypeSafe's **jev** model gives the probability that the page matches your
    intention. It's fast and cheap enough to run on every page you open.
-4. Pages that clearly don't match are replaced with a page explaining the
-   decision. Pages that match, or where jev is unsure, load normally.
+4. Pages scoring below your threshold (a slider in settings) are replaced with
+   a page explaining the decision. Everything else loads normally.
+
+**Strict mode** (optional, in settings) hides every page behind a "verifying"
+screen until jev confirms it matches, so you never see content that doesn't.
 
 Verdicts are cached, so a page you revisit doesn't need a new check. Changing
-your intention or thresholds clears the cache. Strict rate limits and daily
+your intention or threshold clears the cache. Strict rate limits and daily
 caps keep API costs predictable.
 
 ## Privacy
@@ -42,3 +45,6 @@ npm start   # launches Firefox with the extension loaded
 
 Then open the extension settings, add your TypeSafe API key, and set your
 intention from the toolbar popup.
+
+See the **[User Guide](docs/user-guide.md)** for every feature and setting,
+privacy details, and troubleshooting.

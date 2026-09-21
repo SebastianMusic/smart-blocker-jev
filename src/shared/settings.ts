@@ -1,12 +1,12 @@
 export interface Settings {
   enabled: boolean;
+  /** hide every page behind a "verifying" screen until jev confirms it matches */
+  strictMode: boolean;
   apiKey: string;
   model: string;
   intention: string;
-  /** noul below this blocks the page */
-  blockBelow: number;
-  /** noul above this allows the page and caches the verdict */
-  allowAbove: number;
+  /** pages jev scores below this are blocked */
+  threshold: number;
   allowDomains: string[];
   blockDomains: string[];
   neverCheckDomains: string[];
@@ -17,11 +17,11 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
+  strictMode: false,
   apiKey: "",
   model: "jev-latest",
   intention: "",
-  blockBelow: 0.3,
-  allowAbove: 0.7,
+  threshold: 0.3,
   allowDomains: [],
   blockDomains: [],
   neverCheckDomains: [
@@ -34,20 +34,20 @@ export const DEFAULT_SETTINGS: Settings = {
     "proton.me",
     "paypal.com",
   ],
-  minIntervalMs: 1000,
-  maxCallsPerMinute: 10,
-  maxCallsPerDay: 500,
+  minIntervalMs: 100,
+  maxCallsPerMinute: 120,
+  maxCallsPerDay: 10_000,
 };
 
 /** Upper bounds on API usage that settings cannot exceed. */
 export const HARD_LIMITS = {
-  minIntervalMs: 500,
-  maxCallsPerMinute: 30,
-  maxCallsPerDay: 3000,
+  minIntervalMs: 100,
+  maxCallsPerMinute: 120,
+  maxCallsPerDay: 100_000,
 } as const;
 
 /** Changing any of these invalidates every cached verdict. */
-export const VERDICT_KEYS = ["intention", "blockBelow", "allowAbove", "model"] as const;
+export const VERDICT_KEYS = ["intention", "threshold", "model"] as const;
 
 export async function loadSettings(): Promise<Settings> {
   const { settings } = await browser.storage.local.get("settings");

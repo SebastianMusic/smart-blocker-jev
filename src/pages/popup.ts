@@ -75,4 +75,9 @@ $("options").addEventListener("click", () => {
   window.close();
 });
 
+$("debug").addEventListener("click", () => {
+  browser.tabs.create({ url: browser.runtime.getURL("pages/debug.html") });
+  window.close();
+});
+
 init();

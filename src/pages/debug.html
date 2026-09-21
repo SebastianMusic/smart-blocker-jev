@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Smart Blocker Jev debug log</title>
+  <link rel="stylesheet" href="pages.css">
+  <style>
+    body { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+    details > summary { cursor: pointer; list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] > summary { margin-bottom: 8px; }
+    pre {
+      margin: 4px 0 0;
+      padding: 8px;
+      max-height: 420px;
+      overflow: auto;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .meta { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="stack">
+  <div class="row spread">
+    <h1>jev debug log</h1>
+    <button id="clear">Clear log</button>
+  </div>
+  <p class="muted">The last 50 jev calls, newest first. Updates live. Kept in memory only and cleared when Firefox closes. The API key is never logged.</p>
+  <p class="muted" id="empty">No jev calls yet.</p>
+  <div id="log" class="stack"></div>
+
+  <template id="entry">
+    <details class="card">
+      <summary>
+        <div class="row spread">
+          <span class="badge" data-f="result"></span>
+          <span class="muted meta" data-f="meta"></span>
+        </div>
+        <p class="url" data-f="url"></p>
+      </summary>
+      <div class="stack">
+        <div>
+          <label>Sent to jev</label>
+          <pre data-f="request"></pre>
+        </div>
+        <div>
+          <label>Response</label>
+          <pre data-f="response"></pre>
+        </div>
+      </div>
+    </details>
+  </template>
+  <script src="debug.js"></script>
+</body>
+</html>

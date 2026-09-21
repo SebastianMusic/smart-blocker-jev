@@ -13,7 +13,8 @@ async function init() {
   if (params.has("noul") && Number.isFinite(noul)) {
     $("noul-block").hidden = false;
     $("noul").textContent = formatPercent(noul);
-    $("threshold").textContent = formatPercent(s.blockBelow);
+    const rule = params.get("rule");
+    $("rule").textContent = rule ? ` (${rule})` : "";
     $("meter").style.width = formatPercent(noul);
   }
 }
