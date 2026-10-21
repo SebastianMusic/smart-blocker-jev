@@ -2,9 +2,9 @@ import { exportSettings, FORMATS, formatForFile, importSettings } from "../share
 import type { Message, StatusResponse } from "../shared/messages";
 import { DEFAULT_ENDPOINT, HARD_LIMITS, loadSettings, saveSettings, type Settings } from "../shared/settings";
 import { isRegexRule, parseRuleList, regexRuleError } from "../shared/url";
-import { $, formatPercent } from "./dom";
+import { $, formatPercent, setProviderName } from "./dom";
 
-const TEXT_FIELDS = ["intention", "endpoint", "apiKey", "model"] as const;
+const TEXT_FIELDS = ["intention", "endpoint", "apiKey", "model", "providerName"] as const;
 const NUMBER_FIELDS = ["threshold", "minIntervalMs", "maxCallsPerMinute", "maxCallsPerDay"] as const;
 const LIST_FIELDS = ["allowDomains", "blockDomains", "neverCheckDomains"] as const;
 
@@ -27,6 +27,7 @@ function fillForm(s: Settings) {
   for (const k of LIST_FIELDS) field(k).value = s[k].join("\n");
   strictMode.checked = s.strictMode;
   showThreshold();
+  setProviderName(s.providerName);
 }
 
 async function init() {
@@ -58,6 +59,7 @@ $<HTMLFormElement>("form").addEventListener("submit", async (e) => {
 
   if (!patch.model) patch.model = "jev-latest";
   if (!patch.endpoint) patch.endpoint = DEFAULT_ENDPOINT;
+  if (!patch.providerName) patch.providerName = "jev";
 
   await saveSettings(patch);
   savedMsg.textContent = "Saved.";

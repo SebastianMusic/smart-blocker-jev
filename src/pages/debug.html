@@ -26,11 +26,11 @@
 </head>
 <body class="stack">
   <div class="row spread">
-    <h1>jev debug log</h1>
+    <h1><span data-pname>jev</span> debug log</h1>
     <button id="clear">Clear log</button>
   </div>
-  <p class="muted">The last 50 jev calls, newest first. Updates live. Kept in memory only and cleared when Firefox closes. The API key is never logged.</p>
-  <p class="muted" id="empty">No jev calls yet.</p>
+  <p class="muted">The last 50 <span data-pname>jev</span> calls, newest first. Updates live. Kept in memory only and cleared when Firefox closes. The API key is never logged.</p>
+  <p class="muted" id="empty">No <span data-pname>jev</span> calls yet.</p>
   <div id="log" class="stack"></div>
 
   <template id="entry">
@@ -44,7 +44,7 @@
       </summary>
       <div class="stack">
         <div>
-          <label>Sent to jev</label>
+          <label>Sent to <span data-pname>jev</span></label>
           <pre data-f="request"></pre>
         </div>
         <div>

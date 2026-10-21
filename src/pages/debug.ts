@@ -1,5 +1,6 @@
 import { clearDebugLog, readDebugLog, type DebugEntry } from "../shared/debuglog";
-import { $, formatPercent } from "./dom";
+import { loadSettings } from "../shared/settings";
+import { $, formatPercent, setProviderName } from "./dom";
 
 const BADGE_CLASS: Record<string, string> = { block: "s-blocked", allow: "s-allowed" };
 
@@ -34,6 +35,7 @@ async function render() {
     [...document.querySelectorAll<HTMLDetailsElement>("#log details")].filter((d) => d.open).map((d) => d.dataset.key),
   );
   const log = await readDebugLog();
+  const s = await loadSettings();
   $("empty").hidden = log.length > 0;
   $("log").replaceChildren(
     ...log.map((e) => {
@@ -43,6 +45,7 @@ async function render() {
       return node;
     }),
   );
+  setProviderName(s.providerName);
 }
 
 browser.storage.onChanged.addListener((changes, area) => {

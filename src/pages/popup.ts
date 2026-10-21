@@ -1,6 +1,6 @@
 import type { Message, StatusResponse } from "../shared/messages";
 import { loadSettings, saveSettings } from "../shared/settings";
-import { $, formatPercent } from "./dom";
+import { $, formatPercent, setProviderName } from "./dom";
 
 const intention = $<HTMLTextAreaElement>("intention");
 const save = $<HTMLButtonElement>("save");
@@ -17,6 +17,7 @@ async function refresh() {
   } satisfies Message);
 
   enabled.checked = s.enabled;
+  setProviderName(s.providerName);
 
   const paused = status.stats.pausedUntil > Date.now();
   $("paused").hidden = !paused;
@@ -30,7 +31,8 @@ async function refresh() {
   badge.textContent = t?.state ?? "not checked";
   badge.className = `badge s-${t?.state ?? "skipped"}`;
   $("tab-detail").textContent = t?.detail ?? "Nothing checked in this tab yet.";
-  $("tab-noul").textContent = t?.noul !== undefined ? `jev match probability: ${formatPercent(t.noul)}` : "";
+  $("tab-noul").textContent =
+    t?.noul !== undefined ? `${s.providerName} match probability: ${formatPercent(t.noul)}` : "";
 
   $("calls").textContent = String(status.stats.callsToday);
   $("cached").textContent = String(status.stats.cachedVerdicts);

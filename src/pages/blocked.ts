@@ -1,11 +1,12 @@
 import { loadSettings } from "../shared/settings";
-import { $, formatPercent } from "./dom";
+import { $, formatPercent, setProviderName } from "./dom";
 
 async function init() {
   const params = new URLSearchParams(location.search);
   const s = await loadSettings();
 
   $("url").textContent = params.get("url") ?? "";
+  setProviderName(s.providerName);
   $("detail").textContent = params.get("detail") ?? "";
   $("intention").textContent = s.intention || "(none set)";
 
