@@ -45,6 +45,29 @@
     </section>
 
     <section class="card stack">
+      <h2>Model prompt</h2>
+      <p class="muted">What <span data-pname>jev</span> is asked about every page. Pick a starting point, then edit the words. Changing any of this clears cached verdicts.</p>
+      <div>
+        <label for="promptPreset">Preset</label>
+        <select id="promptPreset"></select>
+        <p class="muted">Choosing a preset replaces the three boxes below with its wording. <strong>Custom</strong> leaves your own wording alone.</p>
+      </div>
+      <div>
+        <label for="promptInstructions">Instructions — the question that is asked</label>
+        <textarea id="promptInstructions" rows="3" spellcheck="false"></textarea>
+      </div>
+      <div>
+        <label for="promptCriteriaTrue">Criteria — a page that matches</label>
+        <textarea id="promptCriteriaTrue" rows="6" spellcheck="false"></textarea>
+      </div>
+      <div>
+        <label for="promptCriteriaFalse">Criteria — a page that does not match</label>
+        <textarea id="promptCriteriaFalse" rows="4" spellcheck="false"></textarea>
+      </div>
+      <p class="muted">Search pages, listings and comparison pages lead both ways: they can serve your intention, and waste your time. The default wording treats them as a match and leaves the blocking to your own domain rules and to the strictness line below. Pick <strong>Strict</strong> if you want those pages blocked unless they are clearly about your intention.</p>
+    </section>
+
+    <section class="card stack">
       <h2>Strictness</h2>
       <p class="muted"><span data-pname>jev</span> scores how likely each page is to match your intention. Pages scoring below this line are blocked. Changing it clears cached verdicts.</p>
       <div>

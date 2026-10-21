@@ -97,7 +97,11 @@ function runModel(tabId: number, url: string, key: string, s: Settings): Promise
     if (!allowance.ok) return { kind: "not-run", state: "rate-limited", detail: `Not checked: ${allowance.reason}` };
 
     const domain = getDomain(payload.url) ?? new URL(payload.url).hostname;
-    const result = await askJev(s.endpoint, s.apiKey, s.model, s.intention, { ...payload, domain });
+    const result = await askJev(s.endpoint, s.apiKey, s.model, s.intention, { ...payload, domain }, {
+      instructions: s.promptInstructions,
+      criteriaTrue: s.promptCriteriaTrue,
+      criteriaFalse: s.promptCriteriaFalse,
+    });
     await guard.report(result.outcome);
     appendDebug({
       at: Date.now(),

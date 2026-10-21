@@ -1,22 +1,19 @@
 import type { PagePayload } from "../shared/messages";
+import type { PromptText } from "../shared/prompt";
 import type { CallOutcome } from "./guard";
 
 const TIMEOUT_MS = 8000;
 
-const QUESTIONS = {
-  matches_intention: {
-    type: "noul",
-    instructions:
-      "Is visiting the web page described in `page` consistent with `user_intention`, " +
-      "the user's own statement of how they want to use the internet right now?",
-    criteria: {
-      true:
-        "The page serves what the user intends to do, or is a neutral step toward it " +
-        "(for example a search, login, or reference page used for that purpose).",
-      false: "The page is unrelated to what the user intends, or is a distraction the user wants to avoid.",
+/** The words stored in settings, shaped into the noul question the endpoint expects. */
+export function buildQuestions(p: PromptText) {
+  return {
+    matches_intention: {
+      type: "noul",
+      instructions: p.instructions,
+      criteria: { true: p.criteriaTrue, false: p.criteriaFalse },
     },
-  },
-};
+  } as const;
+}
 
 export type JevResult =
   | { outcome: "ok"; noul: number }
@@ -36,8 +33,9 @@ export async function askJev(
   model: string,
   intention: string,
   page: PagePayload & { domain: string },
+  prompt: PromptText,
 ): Promise<JevResult & { trace: JevTrace }> {
-  const request = { model, state: { user_intention: intention, page }, questions: QUESTIONS };
+  const request = { model, state: { user_intention: intention, page }, questions: buildQuestions(prompt) };
   const started = performance.now();
   const trace: JevTrace = { request, status: null, response: "", ms: 0 };
   const done = (r: JevResult) => ({ ...r, trace: { ...trace, ms: Math.round(performance.now() - started) } });

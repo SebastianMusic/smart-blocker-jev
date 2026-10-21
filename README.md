@@ -49,7 +49,8 @@ npm start   # launches Firefox with the extension loaded
 
 Then set your intention from the toolbar popup. The default endpoint is the
 TypeSafe jev API; settings has an **Endpoint URL** field for any other model
-server, and its API key is optional.
+server, and its API key is optional. The question the model is asked about every
+page is yours to edit under **Model prompt**.
 
 See the **[User Guide](docs/user-guide.md)** for every feature and setting,
 privacy details, and troubleshooting.

@@ -1,10 +1,20 @@
 import { exportSettings, FORMATS, formatForFile, importSettings } from "../shared/config";
+import { DEFAULT_PROMPT, PROMPT_PRESETS, presetById, presetNameFor } from "../shared/prompt";
 import type { Message, StatusResponse } from "../shared/messages";
 import { DEFAULT_ENDPOINT, HARD_LIMITS, loadSettings, saveSettings, type Settings } from "../shared/settings";
 import { isRegexRule, parseRuleList, regexRuleError } from "../shared/url";
 import { $, formatPercent, setProviderName } from "./dom";
 
-const TEXT_FIELDS = ["intention", "endpoint", "apiKey", "model", "providerName"] as const;
+const TEXT_FIELDS = [
+  "intention",
+  "endpoint",
+  "apiKey",
+  "model",
+  "providerName",
+  "promptInstructions",
+  "promptCriteriaTrue",
+  "promptCriteriaFalse",
+] as const;
 const NUMBER_FIELDS = ["threshold", "minIntervalMs", "maxCallsPerMinute", "maxCallsPerDay"] as const;
 const LIST_FIELDS = ["allowDomains", "blockDomains", "neverCheckDomains"] as const;
 
@@ -14,6 +24,21 @@ const strictMode = $<HTMLInputElement>("strictMode");
 const threshold = $<HTMLInputElement>("threshold");
 const showThreshold = () => ($("threshold-value").textContent = formatPercent(Number(threshold.value)));
 threshold.addEventListener("input", showThreshold);
+
+const presetSelect = $<HTMLSelectElement>("promptPreset");
+for (const p of [...PROMPT_PRESETS, { id: "custom", label: "Custom (your own wording)" }]) {
+  const option = document.createElement("option");
+  option.value = p.id;
+  option.textContent = p.label;
+  presetSelect.append(option);
+}
+presetSelect.addEventListener("change", () => {
+  const preset = presetById(presetSelect.value);
+  if (!preset) return;
+  field("promptInstructions").value = preset.instructions;
+  field("promptCriteriaTrue").value = preset.criteriaTrue;
+  field("promptCriteriaFalse").value = preset.criteriaFalse;
+});
 
 async function refreshCounts() {
   const status: StatusResponse = await browser.runtime.sendMessage({ type: "status", tabId: -1 } satisfies Message);
@@ -26,6 +51,11 @@ function fillForm(s: Settings) {
   for (const k of NUMBER_FIELDS) field(k).value = String(s[k]);
   for (const k of LIST_FIELDS) field(k).value = s[k].join("\n");
   strictMode.checked = s.strictMode;
+  presetSelect.value = presetNameFor({
+    instructions: s.promptInstructions,
+    criteriaTrue: s.promptCriteriaTrue,
+    criteriaFalse: s.promptCriteriaFalse,
+  });
   showThreshold();
   setProviderName(s.providerName);
 }
@@ -60,6 +90,9 @@ $<HTMLFormElement>("form").addEventListener("submit", async (e) => {
   if (!patch.model) patch.model = "jev-latest";
   if (!patch.endpoint) patch.endpoint = DEFAULT_ENDPOINT;
   if (!patch.providerName) patch.providerName = "jev";
+  if (!patch.promptInstructions) patch.promptInstructions = DEFAULT_PROMPT.instructions;
+  if (!patch.promptCriteriaTrue) patch.promptCriteriaTrue = DEFAULT_PROMPT.criteriaTrue;
+  if (!patch.promptCriteriaFalse) patch.promptCriteriaFalse = DEFAULT_PROMPT.criteriaFalse;
 
   await saveSettings(patch);
   savedMsg.textContent = "Saved.";

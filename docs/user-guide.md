@@ -30,6 +30,12 @@ verdict is in.
 
 Each verdict is remembered, so revisiting a page is instant and costs nothing.
 
+Search pages, listings and comparison pages lead both ways: they can be the way
+to your intention, and they can be where the afternoon goes. The default prompt
+treats them as a match, so a Google results page for a thesis question is never
+blocked on suspicion. Sites you want gone regardless are what your **Always
+block** list is for.
+
 ## Settings
 
 ### Model endpoint
@@ -40,6 +46,23 @@ the same request shape. **API key** is optional and is only sent when you fill
 it in. **Model** is the value sent to the endpoint (`jev-latest` by default),
 and **Model name shown to you** is the word the popup, the block page and the
 debug log use for it, `jev` by default — call it `Qwen` if that's what you run.
+
+### Model prompt
+
+This is the words the model is asked, and you can change them. Pick a **Preset**
+— Balanced (default), Lenient, Strict, or Custom — and the three boxes fill in.
+Edit any of them and it saves as Custom. **Instructions** is the question; the
+two **Criteria** boxes say what counts as a match and what counts as not one.
+
+The default wording counts a neutral step toward your intention as a match: a
+search, a search results page, a listing, a comparison page, a login, a docs
+index. It says out loud that those pages can lead both ways and that this is not
+a reason to block. **Lenient** goes further and blocks only pages clearly about
+something else. **Strict** is the opposite: it blocks a search page unless the
+query, the page, or the site is specific to the intention you wrote.
+
+A prompt change clears the verdict cache, because the old scores were answers to
+the old question. The exact words sent are logged on the debug page.
 
 ### Strictness
 

@@ -1,6 +1,8 @@
 /** Where page checks are sent. Any OpenAI-compatible-ish endpoint that answers the jev question shape works. */
 export const DEFAULT_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 
+import { DEFAULT_PROMPT } from "./prompt";
+
 export interface Settings {
   enabled: boolean;
   /** hide every page behind a "verifying" screen until jev confirms it matches */
@@ -11,6 +13,10 @@ export interface Settings {
   model: string;
   /** the name pages and messages use for the model, e.g. "jev" or "My Qwen box" */
   providerName: string;
+  /** the yes/no question asked about every page, in plain editable words */
+  promptInstructions: string;
+  promptCriteriaTrue: string;
+  promptCriteriaFalse: string;
   intention: string;
   /** pages scored below this are blocked */
   threshold: number;
@@ -29,6 +35,9 @@ export const DEFAULT_SETTINGS: Settings = {
   apiKey: "",
   model: "jev-latest",
   providerName: "jev",
+  promptInstructions: DEFAULT_PROMPT.instructions,
+  promptCriteriaTrue: DEFAULT_PROMPT.criteriaTrue,
+  promptCriteriaFalse: DEFAULT_PROMPT.criteriaFalse,
   intention: "",
   threshold: 0.3,
   allowDomains: [],
@@ -56,7 +65,15 @@ export const HARD_LIMITS = {
 } as const;
 
 /** Changing any of these invalidates every cached verdict. */
-export const VERDICT_KEYS = ["intention", "threshold", "model", "endpoint"] as const;
+export const VERDICT_KEYS = [
+  "intention",
+  "threshold",
+  "model",
+  "endpoint",
+  "promptInstructions",
+  "promptCriteriaTrue",
+  "promptCriteriaFalse",
+] as const;
 
 export async function loadSettings(): Promise<Settings> {
   const { settings } = await browser.storage.local.get("settings");

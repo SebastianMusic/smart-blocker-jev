@@ -46,7 +46,7 @@ p { margin: 0.25rem 0; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .spread { justify-content: space-between; }
 label { display: block; font-weight: 600; margin-bottom: 4px; }
-textarea, input[type="text"], input[type="password"], input[type="number"] {
+textarea, select, input[type="text"], input[type="password"], input[type="number"] {
   width: 100%;
   font: inherit;
   color: inherit;
