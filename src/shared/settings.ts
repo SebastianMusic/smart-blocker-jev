@@ -1,7 +1,12 @@
+/** Where page checks are sent. Any OpenAI-compatible-ish endpoint that answers the jev question shape works. */
+export const DEFAULT_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
+
 export interface Settings {
   enabled: boolean;
   /** hide every page behind a "verifying" screen until jev confirms it matches */
   strictMode: boolean;
+  endpoint: string;
+  /** optional — only sent when set */
   apiKey: string;
   model: string;
   intention: string;
@@ -18,6 +23,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
   strictMode: false,
+  endpoint: DEFAULT_ENDPOINT,
   apiKey: "",
   model: "jev-latest",
   intention: "",
@@ -47,7 +53,7 @@ export const HARD_LIMITS = {
 } as const;
 
 /** Changing any of these invalidates every cached verdict. */
-export const VERDICT_KEYS = ["intention", "threshold", "model"] as const;
+export const VERDICT_KEYS = ["intention", "threshold", "model", "endpoint"] as const;
 
 export async function loadSettings(): Promise<Settings> {
   const { settings } = await browser.storage.local.get("settings");

@@ -17,7 +17,6 @@ async function refresh() {
   } satisfies Message);
 
   enabled.checked = s.enabled;
-  $("no-key").hidden = !!s.apiKey;
 
   const paused = status.stats.pausedUntil > Date.now();
   $("paused").hidden = !paused;

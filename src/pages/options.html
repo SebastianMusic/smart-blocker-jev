@@ -22,11 +22,16 @@
     </section>
 
     <section class="card stack">
-      <h2>TypeSafe API</h2>
+      <h2>Model endpoint</h2>
       <div>
-        <label for="apiKey">API key</label>
+        <label for="endpoint">Endpoint URL</label>
+        <input type="text" id="endpoint" spellcheck="false" placeholder="https://api.typesafe.ai/v1/systemone">
+        <p class="muted">Where page checks are sent. Defaults to the TypeSafe jev endpoint. Any endpoint that answers the same request shape works — self-hosted or open-source models included.</p>
+      </div>
+      <div>
+        <label for="apiKey">API key (optional)</label>
         <input type="password" id="apiKey" autocomplete="off" spellcheck="false">
-        <p class="muted">Stored only in this browser and sent only to api.typesafe.ai.</p>
+        <p class="muted">Stored only in this browser. Sent only to the endpoint above, and only when set.</p>
       </div>
       <div>
         <label for="model">Model</label>

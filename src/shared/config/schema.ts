@@ -43,6 +43,21 @@ const num =
     return { value: v };
   };
 
+const endpointUrl: Check = (v, path) => {
+  if (typeof v !== "string") return { error: `\`${path}\` must be a string` };
+  const value = v.trim();
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return { error: `\`${path}\` is not a valid URL` };
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return { error: `\`${path}\` must be an http(s) URL` };
+  }
+  return { value };
+};
+
 const rules: Check = (v, path) => {
   if (!Array.isArray(v) || v.some((r) => typeof r !== "string")) return { error: `\`${path}\` must be a list of strings` };
   const parsed = parseRuleList(v.join("\n"));
@@ -57,6 +72,7 @@ export const FIELDS: readonly Field[] = [
   { key: "intention", section: "general", name: "intention", check: text() },
   { key: "threshold", section: "general", name: "threshold", check: num({ min: 0, max: 1 }) },
   { key: "strictMode", section: "general", name: "strict_mode", check: bool },
+  { key: "endpoint", section: "api", name: "endpoint", check: endpointUrl },
   { key: "apiKey", section: "api", name: "key", check: text(), secret: true },
   { key: "model", section: "api", name: "model", check: text({ nonEmpty: true }) },
   { key: "allowDomains", section: "rules", name: "always_allow", check: rules },

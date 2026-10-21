@@ -18,8 +18,9 @@ evening lost to it. Smart Blocker Jev blocks by **intent** instead of domain.
    *"Researching and writing my thesis on coastal erosion"*.
 2. When you open a page, the extension collects a small summary of it (URL,
    title, description, headings and a short excerpt of the main text).
-3. TypeSafe's **jev** model gives the probability that the page matches your
-   intention. It's fast and cheap enough to run on every page you open.
+3. The model at your endpoint (TypeSafe's **jev** by default) gives the
+   probability that the page matches your intention. It's fast and cheap enough
+   to run on every page you open.
 4. Pages scoring below your threshold (a slider in settings) are replaced with
    a page explaining the decision. Everything else loads normally.
 
@@ -32,7 +33,8 @@ caps keep API costs predictable.
 
 ## Privacy
 
-- Page content is sent only to the TypeSafe API, using your own API key.
+- Page content is sent only to the endpoint you configure, with your API key
+  only if you set one.
 - Form fields and password values are never read.
 - Private windows, webmail, login pages and banking sites are never checked.
 
@@ -43,8 +45,9 @@ npm install
 npm start   # launches Firefox with the extension loaded
 ```
 
-Then open the extension settings, add your TypeSafe API key, and set your
-intention from the toolbar popup.
+Then set your intention from the toolbar popup. The default endpoint is the
+TypeSafe jev API; settings has an **Endpoint URL** field for any other model
+server, and its API key is optional.
 
 See the **[User Guide](docs/user-guide.md)** for every feature and setting,
 privacy details, and troubleshooting.

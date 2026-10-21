@@ -7,7 +7,9 @@ model checks each page you open against it.
 ## Getting started
 
 1. Install the extension and open its **Settings** (toolbar icon → *Settings*).
-2. Paste your **TypeSafe API key** and click **Save**.
+2. Click **Save** in Settings. The default endpoint is the TypeSafe jev model, so
+   nothing else is needed. For another endpoint (self-hosted or open-source model),
+   put its URL in **Endpoint URL** and, if it asks for one, an **API key**.
 3. Click the toolbar icon and write your **intention**, for example
    *"Learning about Buddhism"* or *"Writing my thesis on coastal erosion"*.
    Click **Save**.
@@ -103,8 +105,9 @@ threshold = 0.3
 strict_mode = false
 
 [api]
+endpoint = "https://api.typesafe.ai/v1/systemone"
 model = "jev-latest"
-# key = "your TypeSafe API key"
+# key = "your API key, only if your endpoint needs one"
 
 [rules]
 always_allow = []
@@ -134,7 +137,8 @@ automatically.
 
 ## Privacy
 
-- Page summaries are sent only to the TypeSafe API, using your own key.
+- Page summaries are sent only to the endpoint you configured, and with your key
+  only if you set one.
 - What you type into forms and password fields is never read or sent.
 - Private windows are never checked.
 - Sites on the *Never check* list, and any site with "bank" in its name, are
@@ -144,7 +148,7 @@ automatically.
 
 | Problem | What to do |
 | --- | --- |
-| Nothing is being blocked | Check that the extension is **On**, an intention is set, and an API key is saved. The popup's *This tab* card shows the reason. |
+| Nothing is being blocked | Check that the extension is **On** and an intention is set. The popup's *This tab* card shows the reason. |
 | A page you need is blocked | Lower the strictness slider, reword your intention, or add the site to **Always allow**. |
 | A distracting page gets through | Raise the slider or add the site to **Always block**. Then click **Flush verdicts**. |
 | "Checking paused" in the popup | You hit a limit or the API failed. Wait, or click **Resume now**. |
