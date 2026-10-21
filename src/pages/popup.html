@@ -13,7 +13,7 @@
   </div>
 
   <div class="card banner" id="paused" hidden>
-    <p><strong>jev calls paused:</strong> <span id="pause-reason"></span></p>
+    <p><strong><span data-pname>jev</span> calls paused:</strong> <span id="pause-reason"></span></p>
     <p class="muted">Until <span id="pause-until"></span></p>
     <button id="resume">Resume now</button>
   </div>
@@ -37,7 +37,7 @@
   </div>
 
   <div class="card">
-    <p class="muted"><span id="calls"></span> jev calls today · <span id="cached"></span> cached verdicts (<span id="blocked"></span> blocked)</p>
+    <p class="muted"><span id="calls"></span> <span data-pname>jev</span> calls today · <span id="cached"></span> cached verdicts (<span id="blocked"></span> blocked)</p>
     <div class="row" style="margin-top:8px">
       <button id="flush">Flush verdicts</button>
       <button id="options">Settings</button>

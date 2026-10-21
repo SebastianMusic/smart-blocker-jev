@@ -9,8 +9,10 @@ export interface Settings {
   /** optional — only sent when set */
   apiKey: string;
   model: string;
+  /** the name pages and messages use for the model, e.g. "jev" or "My Qwen box" */
+  providerName: string;
   intention: string;
-  /** pages jev scores below this are blocked */
+  /** pages scored below this are blocked */
   threshold: number;
   allowDomains: string[];
   blockDomains: string[];
@@ -26,6 +28,7 @@ export const DEFAULT_SETTINGS: Settings = {
   endpoint: DEFAULT_ENDPOINT,
   apiKey: "",
   model: "jev-latest",
+  providerName: "jev",
   intention: "",
   threshold: 0.3,
   allowDomains: [],

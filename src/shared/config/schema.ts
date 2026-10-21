@@ -75,6 +75,7 @@ export const FIELDS: readonly Field[] = [
   { key: "endpoint", section: "api", name: "endpoint", check: endpointUrl },
   { key: "apiKey", section: "api", name: "key", check: text(), secret: true },
   { key: "model", section: "api", name: "model", check: text({ nonEmpty: true }) },
+  { key: "providerName", section: "api", name: "provider_name", check: text() },
   { key: "allowDomains", section: "rules", name: "always_allow", check: rules },
   { key: "blockDomains", section: "rules", name: "always_block", check: rules },
   { key: "neverCheckDomains", section: "rules", name: "never_check", check: rules },

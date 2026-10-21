@@ -26,7 +26,7 @@
       <div>
         <label for="endpoint">Endpoint URL</label>
         <input type="text" id="endpoint" spellcheck="false" placeholder="https://api.typesafe.ai/v1/systemone">
-        <p class="muted">Where page checks are sent. Defaults to the TypeSafe jev endpoint. Any endpoint that answers the same request shape works — self-hosted or open-source models included.</p>
+        <p class="muted">Where page checks are sent. Defaults to the TypeSafe jev endpoint. Any endpoint that answers the same request shape works — self-hosted and open-source models included.</p>
       </div>
       <div>
         <label for="apiKey">API key (optional)</label>
@@ -37,11 +37,16 @@
         <label for="model">Model</label>
         <input type="text" id="model" spellcheck="false">
       </div>
+      <div>
+        <label for="providerName">Model name shown to you</label>
+        <input type="text" id="providerName" spellcheck="false" placeholder="jev">
+        <p class="muted">Used in the popup, the block page and the debug log — for example <code>jev</code> or <code>My Qwen box</code>. Sent to <span data-pname>jev</span> as the <strong>Model</strong> value above, never as this name.</p>
+      </div>
     </section>
 
     <section class="card stack">
       <h2>Strictness</h2>
-      <p class="muted">jev scores how likely each page is to match your intention. Pages scoring below this line are blocked. Changing it clears cached verdicts.</p>
+      <p class="muted"><span data-pname>jev</span> scores how likely each page is to match your intention. Pages scoring below this line are blocked. Changing it clears cached verdicts.</p>
       <div>
         <label for="threshold">Block pages below <span id="threshold-value"></span> match</label>
         <input type="range" id="threshold" min="0.01" max="0.99" step="0.01">
@@ -51,7 +56,7 @@
 
     <section class="card stack">
       <h2>Domain rules</h2>
-      <p class="muted">One rule per line. Rules apply without calling jev.</p>
+      <p class="muted">One rule per line. Rules apply without calling <span data-pname>jev</span>.</p>
       <p class="muted">A domain like <code>youtube.com</code> also covers its subdomains. A regular expression between slashes, like <code>/youtube\.com\/shorts/</code> or <code>/^(www\.)?reddit\.com$/</code>, is matched case-insensitively against both the hostname and the full URL.</p>
       <div class="grid2">
         <div>
@@ -64,7 +69,7 @@
         </div>
       </div>
       <div>
-        <label for="neverCheckDomains">Never check (sensitive sites: never sent to jev)</label>
+        <label for="neverCheckDomains">Never check (sensitive sites: never sent to <span data-pname>jev</span>)</label>
         <textarea id="neverCheckDomains" rows="5" spellcheck="false"></textarea>
         <p class="muted">Domains containing "bank" are always skipped.</p>
       </div>

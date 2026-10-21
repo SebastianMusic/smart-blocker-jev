@@ -49,7 +49,7 @@ async function quickDecision(s: Settings, url: string): Promise<Quick> {
   }
   if (hostMatches(host, internal)) return { kind: "skip", detail: "Internal" };
   if (ruleMatches(url, s.neverCheckDomains) || /bank/i.test(getDomainWithoutSuffix(host) ?? "")) {
-    return { kind: "skip", detail: "Sensitive site, never sent to the model" };
+    return { kind: "skip", detail: `Sensitive site, never sent to ${s.providerName}` };
   }
   if (ruleMatches(url, s.allowDomains)) return { kind: "allow", detail: "On your allow list" };
   if (ruleMatches(url, s.blockDomains)) return { kind: "block", detail: "On your block list" };
@@ -109,7 +109,7 @@ function runModel(tabId: number, url: string, key: string, s: Settings): Promise
       ...result.trace,
     }).catch((e) => console.error("debug log failed", e));
     if (result.outcome !== "ok") {
-      return { kind: "not-run", state: "error", detail: `model call failed (${result.message}); allowed` };
+      return { kind: "not-run", state: "error", detail: `${s.providerName} call failed (${result.message}); allowed` };
     }
     return { kind: "verdict", noul: result.noul };
   })().finally(() => inflight.delete(key));
@@ -164,7 +164,7 @@ async function evaluate(tabId: number, url: string) {
     return finish(tabId, url, s, QUICK_STATE[q.kind], q.detail, "noul" in q ? q.noul : undefined);
   }
 
-  setStatus(tabId, url, "checking", "Asking the model");
+  setStatus(tabId, url, "checking", `Asking ${s.providerName}`);
   const generation = verdicts.generation;
   const run = await runModel(tabId, url, q.key, s);
   if (run.kind === "not-run") return finish(tabId, url, s, run.state, run.detail);
