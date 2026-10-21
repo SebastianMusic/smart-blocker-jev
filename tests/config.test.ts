@@ -98,6 +98,13 @@ describe("config import", () => {
     expect(r.errors.join("\n")).toContain("`limits.max_calls_per_day` must be a whole number");
   });
 
+  it("rejects an endpoint that is not an http(s) URL", () => {
+    expect(importSettings('[api]\nendpoint = "ftp://host/x"').errors).toEqual(["`api.endpoint` must be an http(s) URL"]);
+    expect(importSettings('[api]\nendpoint = "not a url"').errors).toEqual(["`api.endpoint` is not a valid URL"]);
+    const ok = importSettings('[api]\nendpoint = "http://localhost:8080/v1/systemone"');
+    expect(ok.settings.endpoint).toBe("http://localhost:8080/v1/systemone");
+  });
+
   it("warns about unknown settings but still imports the rest", () => {
     const r = importSettings("colour = 1\n[general]\nthreshold = 0.6\nthresold = 0.9\n[extras]\na = 1\n");
     expect(r.errors).toEqual([]);

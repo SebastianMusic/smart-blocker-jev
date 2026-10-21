@@ -1,10 +1,10 @@
 import { exportSettings, FORMATS, formatForFile, importSettings } from "../shared/config";
 import type { Message, StatusResponse } from "../shared/messages";
-import { HARD_LIMITS, loadSettings, saveSettings, type Settings } from "../shared/settings";
+import { DEFAULT_ENDPOINT, HARD_LIMITS, loadSettings, saveSettings, type Settings } from "../shared/settings";
 import { isRegexRule, parseRuleList, regexRuleError } from "../shared/url";
 import { $, formatPercent } from "./dom";
 
-const TEXT_FIELDS = ["intention", "apiKey", "model"] as const;
+const TEXT_FIELDS = ["intention", "endpoint", "apiKey", "model"] as const;
 const NUMBER_FIELDS = ["threshold", "minIntervalMs", "maxCallsPerMinute", "maxCallsPerDay"] as const;
 const LIST_FIELDS = ["allowDomains", "blockDomains", "neverCheckDomains"] as const;
 
@@ -57,6 +57,7 @@ $<HTMLFormElement>("form").addEventListener("submit", async (e) => {
   patch.strictMode = strictMode.checked;
 
   if (!patch.model) patch.model = "jev-latest";
+  if (!patch.endpoint) patch.endpoint = DEFAULT_ENDPOINT;
 
   await saveSettings(patch);
   savedMsg.textContent = "Saved.";

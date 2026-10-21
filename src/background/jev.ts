@@ -1,7 +1,6 @@
 import type { PagePayload } from "../shared/messages";
 import type { CallOutcome } from "./guard";
 
-const ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 const TIMEOUT_MS = 8000;
 
 const QUESTIONS = {
@@ -32,6 +31,7 @@ export interface JevTrace {
 }
 
 export async function askJev(
+  endpoint: string,
   apiKey: string,
   model: string,
   intention: string,
@@ -44,9 +44,12 @@ export async function askJev(
 
   let res: Response;
   try {
-    res = await fetch(ENDPOINT, {
+    res = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+      },
       body: JSON.stringify(request),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });

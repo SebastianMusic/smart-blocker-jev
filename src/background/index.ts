@@ -41,9 +41,15 @@ async function quickDecision(s: Settings, url: string): Promise<Quick> {
   if (!s.enabled) return { kind: "skip", detail: "Smart Blocker is paused" };
   if (!isCheckableUrl(url)) return { kind: "skip", detail: "Not a web page" };
   const host = new URL(url).hostname;
-  if (hostMatches(host, NEVER_CHECK_HOSTS)) return { kind: "skip", detail: "Internal" };
+  const internal = [...NEVER_CHECK_HOSTS];
+  try {
+    internal.push(new URL(s.endpoint).hostname);
+  } catch {
+    /* the settings import guard keeps endpoint a valid http(s) URL */
+  }
+  if (hostMatches(host, internal)) return { kind: "skip", detail: "Internal" };
   if (ruleMatches(url, s.neverCheckDomains) || /bank/i.test(getDomainWithoutSuffix(host) ?? "")) {
-    return { kind: "skip", detail: "Sensitive site, never sent to jev" };
+    return { kind: "skip", detail: "Sensitive site, never sent to the model" };
   }
   if (ruleMatches(url, s.allowDomains)) return { kind: "allow", detail: "On your allow list" };
   if (ruleMatches(url, s.blockDomains)) return { kind: "block", detail: "On your block list" };
@@ -52,7 +58,6 @@ async function quickDecision(s: Settings, url: string): Promise<Quick> {
   const key = urlKey(url);
   const cached = await verdicts.get(key);
   if (cached) return { kind: cached.decision, noul: cached.noul, detail: "Cached verdict" };
-  if (!s.apiKey) return { kind: "skip", detail: "No TypeSafe API key set" };
   return { kind: "need-model", key };
 }
 
@@ -92,7 +97,7 @@ function runModel(tabId: number, url: string, key: string, s: Settings): Promise
     if (!allowance.ok) return { kind: "not-run", state: "rate-limited", detail: `Not checked: ${allowance.reason}` };
 
     const domain = getDomain(payload.url) ?? new URL(payload.url).hostname;
-    const result = await askJev(s.apiKey, s.model, s.intention, { ...payload, domain });
+    const result = await askJev(s.endpoint, s.apiKey, s.model, s.intention, { ...payload, domain });
     await guard.report(result.outcome);
     appendDebug({
       at: Date.now(),
@@ -104,7 +109,7 @@ function runModel(tabId: number, url: string, key: string, s: Settings): Promise
       ...result.trace,
     }).catch((e) => console.error("debug log failed", e));
     if (result.outcome !== "ok") {
-      return { kind: "not-run", state: "error", detail: `jev call failed (${result.message}); allowed` };
+      return { kind: "not-run", state: "error", detail: `model call failed (${result.message}); allowed` };
     }
     return { kind: "verdict", noul: result.noul };
   })().finally(() => inflight.delete(key));
@@ -160,7 +165,7 @@ async function evaluate(tabId: number, url: string) {
     return finish(tabId, url, s, QUICK_STATE[q.kind], q.detail, "noul" in q ? q.noul : undefined);
   }
 
-  setStatus(tabId, url, "checking", "Asking jev");
+  setStatus(tabId, url, "checking", "Asking the model");
   const generation = verdicts.generation;
   const run = await runModel(tabId, url, q.key, s);
   if (run.kind === "not-run") return finish(tabId, url, s, run.state, run.detail);
