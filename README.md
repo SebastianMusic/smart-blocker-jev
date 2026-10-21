@@ -24,8 +24,10 @@ evening lost to it. Smart Blocker Jev blocks by **intent** instead of domain.
 4. Pages scoring below your threshold (a slider in settings) are replaced with
    a page explaining the decision. Everything else loads normally.
 
-**Strict mode** (optional, in settings) hides every page behind a "verifying"
-screen until jev confirms it matches, so you never see content that doesn't.
+Every page you open is covered by a "verifying" screen (and muted) while the
+model scores it, so you see it only once the verdict is in. **Strict mode**
+(optional, in settings) goes further: a page that can't be verified stays
+hidden behind that screen until you click *Show page anyway*.
 
 Verdicts are cached, so a page you revisit doesn't need a new check. Changing
 your intention or threshold clears the cache. Strict rate limits and daily

@@ -140,7 +140,7 @@ function tellOverlay(tabId: number, msg: Message) {
   return browser.tabs.sendMessage(tabId, msg, { frameId: 0 }).catch(() => undefined);
 }
 
-/** Records the final outcome for a page and acts on it (block, or in strict mode reveal/unverified). */
+/** Records the final outcome for a page and acts on it (block, or reveal/hide the checking screen). */
 async function finish(tabId: number, url: string, s: Settings, state: TabState, detail: string, noul?: number) {
   setStatus(tabId, url, state, detail, noul);
 
@@ -150,8 +150,7 @@ async function finish(tabId: number, url: string, s: Settings, state: TabState, 
     await restoreAudio(tabId);
     return redirectToBlocked(tabId, url, s, detail, noul);
   }
-  if (!isStrict(s)) return;
-  if (state === "rate-limited" || state === "error") {
+  if (isStrict(s) && (state === "rate-limited" || state === "error")) {
     return tellOverlay(tabId, { type: "unverified", url, detail });
   }
   await tellOverlay(tabId, { type: "reveal", url });
@@ -182,21 +181,21 @@ async function evaluate(tabId: number, url: string) {
     : finish(tabId, url, s, "blocked", "Does not match your intention", noul);
 }
 
-/** Answers the strict-mode overlay: can the page be shown right away, without asking jev? */
-async function coverCheck(tabId: number, url: string): Promise<{ reveal: boolean }> {
+/** Answers the checking overlay: can the page be shown right away, without asking the model? */
+async function coverCheck(tabId: number, url: string): Promise<{ reveal: boolean; strict: boolean }> {
   const s = await loadSettings();
-  if (!isStrict(s)) return { reveal: true };
+  if (!s.enabled) return { reveal: true, strict: false };
   const q = await quickDecision(s, url).catch(() => null);
-  if (q?.kind === "allow" || q?.kind === "skip") return { reveal: true };
+  if (q?.kind === "allow" || q?.kind === "skip") return { reveal: true, strict: isStrict(s) };
   if (q?.kind !== "block") await muteWhileVerifying(tabId);
-  return { reveal: false };
+  return { reveal: false, strict: isStrict(s) };
 }
 
 const OVERLAY_ID = "strict-overlay";
 
 async function syncOverlayRegistration(s: Settings) {
   const registered = await browser.scripting.getRegisteredContentScripts({ ids: [OVERLAY_ID] });
-  if (isStrict(s) && registered.length === 0) {
+  if (s.enabled && registered.length === 0) {
     await browser.scripting.registerContentScripts([
       {
         id: OVERLAY_ID,
@@ -206,7 +205,7 @@ async function syncOverlayRegistration(s: Settings) {
         persistAcrossSessions: true,
       },
     ]);
-  } else if (!isStrict(s) && registered.length > 0) {
+  } else if (!s.enabled && registered.length > 0) {
     await browser.scripting.unregisterContentScripts({ ids: [OVERLAY_ID] });
   }
 }
@@ -273,7 +272,7 @@ browser.webNavigation.onHistoryStateUpdated.addListener(async ({ tabId, frameId,
     return finish(tabId, url, s, QUICK_STATE[q.kind], q.detail, "noul" in q ? q.noul : undefined);
   }
 
-  if (isStrict(s)) {
+  if (s.enabled) {
     await tellOverlay(tabId, { type: "cover" });
     await muteWhileVerifying(tabId);
   }
@@ -299,9 +298,9 @@ browser.storage.onChanged.addListener((changes, area) => {
   const after = { ...DEFAULT_SETTINGS, ...(changes.settings.newValue as Partial<Settings> | undefined) };
   if (verdictInputsChanged(before, after)) flushVerdicts();
   if (before.apiKey !== after.apiKey) guard.resume();
-  if (isStrict(before) !== isStrict(after)) syncOverlayRegistration(after);
+  if (before.enabled !== after.enabled) syncOverlayRegistration(after);
 });
 
-// Keep the strict-mode overlay registration in line with settings whenever the event page wakes.
+// Keep the checking overlay in line with settings whenever the event page wakes.
 browser.runtime.onStartup.addListener(() => undefined);
 loadSettings().then(syncOverlayRegistration).catch((e) => console.error("overlay sync failed", e));

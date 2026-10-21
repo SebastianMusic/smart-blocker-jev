@@ -20,9 +20,11 @@ That's it. Every page you open from now on is checked.
 
 When a page loads, the extension reads a short summary of it (address, title,
 description, headings and an excerpt of the text) and asks jev how likely it
-is that the page matches your intention.
+is that the page matches your intention. While it asks, the page is covered by
+a *"Checking this page…"* screen (and muted), so you see the page only once the
+verdict is in.
 
-- **Likely a match:** the page stays open.
+- **Likely a match:** the screen is removed and the page stays open.
 - **Unlikely to match:** you're sent to a page explaining the decision, showing
   jev's score and your intention. Click **Go back** to return.
 
@@ -37,13 +39,13 @@ blocked. Move it right to block more, left to block less. The default is 30%.
 
 ### Strict mode
 
-When enabled, every page is hidden behind a *"Checking this page…"* screen
-(and muted) until jev has confirmed it matches, so you never see content that
-doesn't. Pages you've already verified, or that are on your allow list, show
-immediately.
+Pages are always covered by a *"Checking this page…"* screen (and muted) while
+they are being checked. Pages you've already verified, or that are on your
+allow list, show immediately.
 
-If a page can't be checked (see *Limits* below), the screen tells you why and
-offers **Show page anyway**.
+If a page can't be checked (see *Limits* below), normal mode shows the page and
+adds the reason to the popup. Strict mode keeps it covered with a **Show page
+anyway** button, so nothing unverified is ever shown unless you ask for it.
 
 ### Domain rules
 

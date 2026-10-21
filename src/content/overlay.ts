@@ -1,7 +1,7 @@
 import type { Message } from "../shared/messages";
 import { urlKey } from "../shared/url";
 
-// Registered at document_start only while strict mode is on.
+// Registered at document_start while the extension is on.
 
 const TIMEOUT_MS = 20_000;
 
@@ -12,6 +12,8 @@ let title: HTMLElement;
 let detail: HTMLElement;
 let button: HTMLButtonElement;
 let timer: ReturnType<typeof setTimeout> | undefined;
+/** strict mode keeps a page that cannot be verified covered; otherwise the page is shown on timeout */
+let strictMode = true;
 
 const SHADOW_CSS = `
   .screen {
@@ -98,7 +100,7 @@ function cover() {
   button.hidden = true;
   screen.classList.remove("unverified");
   clearTimeout(timer);
-  timer = setTimeout(() => unverified("Verification took too long."), TIMEOUT_MS);
+  timer = setTimeout(() => (strictMode ? unverified("Verification took too long.") : reveal()), TIMEOUT_MS);
 }
 
 function unverified(reason: string) {
@@ -134,7 +136,8 @@ browser.runtime.onMessage.addListener((msg: Message) => {
 cover();
 browser.runtime
   .sendMessage({ type: "cover-check", url: location.href } satisfies Message)
-  .then((r: { reveal?: boolean } | undefined) => {
+  .then((r: { reveal?: boolean; strict?: boolean } | undefined) => {
+    strictMode = r?.strict ?? true;
     if (r?.reveal) reveal();
   })
   .catch(() => undefined);
